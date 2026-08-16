@@ -5,6 +5,7 @@
 #import "StatusItemController.h"
 #import "PermissionsManager.h"
 #import "LauncherController.h"
+#import "ModifierScrollZoom.h"
 #import <Sparkle/Sparkle.h>
 
 @class MouseTap, WelcomeWindowController, PrefsWindowController, DebugWindowController, TapLogger, TestWindowController;
@@ -17,6 +18,8 @@ extern NSString *const PrefsReverseMouse;
 extern NSString *const PrefsHideIcon;
 extern NSString *const PrefsDiscreteScrollStepSize;
 extern NSString *const PrefsShowDiscreteScrollOptions;
+extern NSString *const PrefsModifierScrollZoomEnabled;
+extern NSString *const PrefsModifierScrollZoomModifier;
 
 @interface AppDelegate : NSObject <NSApplicationDelegate, StatusItemControllerDelegate, SPUUpdaterDelegate, SPUStandardUserDriverDelegate> {
 }

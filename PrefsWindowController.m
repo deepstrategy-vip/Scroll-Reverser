@@ -15,6 +15,7 @@ static NSString *const kKeyImageName=@"image";
 
 static NSString *const kPrefsToolbarIdentifer=@"PrefsToolbar";
 static NSString *const kPrefsLastUsedPanel=@"PrefsLastUsedPanel";
+static NSUserInterfaceItemIdentifier const kApplicationZoomBoxIdentifier=@"ApplicationZoomBox";
 
 
 static void *_contextRefresh=&_contextRefresh;
@@ -29,6 +30,92 @@ static void *_contextPrefsStepSize=&_contextPrefsStepSize;
 @end
 
 @implementation PrefsWindowController
+
+#pragma mark Application zoom controls
+
+// Keep a programmatic fallback so local Command Line Tools builds can reuse the
+// upstream compiled nib. Normal Xcode builds find the identified box in the XIB
+// and return without creating a second copy.
+- (void)installApplicationZoomControlsIfNeeded
+{
+    NSStackView *settingsStack=nil;
+    for (NSView *view in self.scrollingSettings.subviews) {
+        if ([view isKindOfClass:[NSStackView class]]) {
+            settingsStack=(NSStackView *)view;
+            break;
+        }
+    }
+    if (!settingsStack) {
+        NSLog(@"Could not find scrolling settings stack for application zoom controls");
+        return;
+    }
+
+    for (NSView *view in settingsStack.arrangedSubviews) {
+        if ([view.identifier isEqualToString:kApplicationZoomBoxIdentifier]) {
+            return; // The current XIB already contains these controls.
+        }
+    }
+
+    NSButton *const enabled=[NSButton checkboxWithTitle:self.menuStringModifierScrollZoom
+                                                 target:nil
+                                                 action:nil];
+    NSPopUpButton *const modifier=[[NSPopUpButton alloc] initWithFrame:NSZeroRect pullsDown:NO];
+    [modifier addItemWithTitle:@"⌃ Control"];
+    modifier.lastItem.tag=SRScrollZoomModifierControl;
+    [modifier addItemWithTitle:@"⌘ Command"];
+    modifier.lastItem.tag=SRScrollZoomModifierCommand;
+
+    NSTextField *const label=[NSTextField labelWithString:self.menuStringModifierKey];
+    NSStackView *const modifierRow=[NSStackView stackViewWithViews:@[label, modifier]];
+    modifierRow.orientation=NSUserInterfaceLayoutOrientationHorizontal;
+    modifierRow.alignment=NSLayoutAttributeCenterY;
+    modifierRow.spacing=12;
+
+    NSStackView *const controls=[NSStackView stackViewWithViews:@[enabled, modifierRow]];
+    controls.orientation=NSUserInterfaceLayoutOrientationVertical;
+    controls.alignment=NSLayoutAttributeLeading;
+    controls.spacing=8;
+    controls.translatesAutoresizingMaskIntoConstraints=NO;
+
+    NSBox *const box=[[NSBox alloc] initWithFrame:NSZeroRect];
+    box.identifier=kApplicationZoomBoxIdentifier;
+    box.title=self.menuStringApplicationZoomHeader;
+    box.translatesAutoresizingMaskIntoConstraints=NO;
+    [box.contentView addSubview:controls];
+    [NSLayoutConstraint activateConstraints:@[
+        [controls.leadingAnchor constraintEqualToAnchor:box.contentView.leadingAnchor constant:14],
+        [controls.trailingAnchor constraintLessThanOrEqualToAnchor:box.contentView.trailingAnchor constant:-14],
+        [controls.topAnchor constraintEqualToAnchor:box.contentView.topAnchor constant:8],
+        [controls.bottomAnchor constraintEqualToAnchor:box.contentView.bottomAnchor constant:-8],
+    ]];
+
+    NSUserDefaultsController *const defaults=[NSUserDefaultsController sharedUserDefaultsController];
+    [enabled bind:NSEnabledBinding toObject:self.appDelegate withKeyPath:@"enabled" options:nil];
+    [enabled bind:NSValueBinding
+         toObject:defaults
+      withKeyPath:[@"values." stringByAppendingString:PrefsModifierScrollZoomEnabled]
+          options:nil];
+    [modifier bind:NSEnabledBinding toObject:self.appDelegate withKeyPath:@"enabled" options:nil];
+    [modifier bind:@"enabled2"
+          toObject:defaults
+       withKeyPath:[@"values." stringByAppendingString:PrefsModifierScrollZoomEnabled]
+           options:nil];
+    [modifier bind:NSSelectedTagBinding
+          toObject:defaults
+       withKeyPath:[@"values." stringByAppendingString:PrefsModifierScrollZoomModifier]
+           options:nil];
+    [box bind:NSHiddenBinding
+     toObject:self.appDelegate.permissionsManager
+  withKeyPath:@"hasAllRequiredPermissions"
+      options:@{NSValueTransformerNameBindingOption: NSNegateBooleanTransformerName}];
+
+    const NSInteger insertIndex=MIN((NSInteger)settingsStack.arrangedSubviews.count, 2);
+    [settingsStack insertArrangedSubview:box atIndex:insertIndex];
+    [NSLayoutConstraint activateConstraints:@[
+        [box.leadingAnchor constraintEqualToAnchor:settingsStack.leadingAnchor],
+        [box.trailingAnchor constraintEqualToAnchor:settingsStack.trailingAnchor],
+    ]];
+}
 
 #pragma mark Step size slider
 
@@ -87,6 +174,7 @@ static const double _multiplier=25.0;
 - (void)windowDidLoad
 {
     [super windowDidLoad];
+    [self installApplicationZoomControlsIfNeeded];
     self.width=400; // minimum width to avoid toolbar collapse
     
     NSArray *const toolbarDefinition=@[kPanelScrolling, kPanelApp];
@@ -451,6 +539,18 @@ static const double _multiplier=25.0;
 
 - (NSString *)menuStringMouseWheelStepMax {
     return NSLocalizedString(@"Large", @"Large step size");
+}
+
+- (NSString *)menuStringApplicationZoomHeader {
+    return NSLocalizedString(@"Application Zoom", @"Prefs section header");
+}
+
+- (NSString *)menuStringModifierScrollZoom {
+    return NSLocalizedString(@"Zoom with modifier + mouse wheel", @"Prefs check box");
+}
+
+- (NSString *)menuStringModifierKey {
+    return NSLocalizedString(@"Modifier key", @"Prefs label");
 }
 
 @end

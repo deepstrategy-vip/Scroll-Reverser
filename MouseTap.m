@@ -5,13 +5,25 @@
 #import "CoreFoundation/CoreFoundation.h"
 #import "TapLogger.h"
 #import "AppDelegate.h"
+#import "ModifierScrollZoom.h"
 #import <mach/mach_time.h>
+#import <math.h>
 
 static BOOL _preventReverseOtherApp;
 
 static NSString *const kKeyActive=@"active";
 
 #define MILLISECOND ((uint64_t)1000000)
+
+@interface MouseTap ()
+@property CFMachPortRef activeTapPort;
+@property CFRunLoopSourceRef activeTapSource;
+@property CFMachPortRef passiveTapPort;
+@property CFRunLoopSourceRef passiveTapSource;
+@property SRScrollZoomState zoomState;
+@property BOOL zoomCaptureActive;
+@property NSInteger zoomCaptureModifier;
+@end
 
 static ScrollPhase _momentumPhaseForEvent(CGEventRef event)
 {
@@ -51,11 +63,51 @@ static NSInteger _stepsize(void)
     return setting;
 }
 
+static pid_t _zoomTargetPID(CGEventRef eventRef)
+{
+    const int64_t eventTarget=CGEventGetIntegerValueField(eventRef, kCGEventTargetUnixProcessID);
+    if (eventTarget>0&&eventTarget<=INT32_MAX) {
+        return (pid_t)eventTarget;
+    }
+    return [NSWorkspace sharedWorkspace].frontmostApplication.processIdentifier;
+}
+
+static BOOL _postApplicationZoom(pid_t targetPID, SRScrollZoomDirection direction)
+{
+    const CGKeyCode keyCode=SRScrollZoomKeyCodeForDirection(direction);
+    if (targetPID<=0||keyCode==UINT16_MAX) {
+        return NO;
+    }
+
+    CGEventRef const keyDown=CGEventCreateKeyboardEvent(NULL, keyCode, YES);
+    CGEventRef const keyUp=CGEventCreateKeyboardEvent(NULL, keyCode, NO);
+    if (!keyDown||!keyUp) {
+        if (keyDown) CFRelease(keyDown);
+        if (keyUp) CFRelease(keyUp);
+        return NO;
+    }
+
+    // Always send the application's ordinary zoom shortcuts, regardless of
+    // whether Control or Command was used to trigger this conversion.
+    const CGEventFlags outputFlags=SRScrollZoomOutputEventFlags(direction);
+    CGEventSetFlags(keyDown, outputFlags);
+    CGEventSetFlags(keyUp, outputFlags);
+    CGEventSetIntegerValueField(keyDown, kCGEventSourceUserData, SRScrollZoomSyntheticEventTag);
+    CGEventSetIntegerValueField(keyUp, kCGEventSourceUserData, SRScrollZoomSyntheticEventTag);
+    CGEventPostToPid(targetPID, keyDown);
+    CGEventPostToPid(targetPID, keyUp);
+
+    CFRelease(keyDown);
+    CFRelease(keyUp);
+    return YES;
+}
+
 static CGEventRef _callback(CGEventTapProxy proxy,
                            CGEventType type,
                            CGEventRef eventRef,
                            void *userInfo)
 {
+    CGEventRef result=eventRef;
     @autoreleasepool
     {
         MouseTap *const tap=(__bridge MouseTap *)userInfo;
@@ -155,6 +207,8 @@ static CGEventRef _callback(CGEventTapProxy proxy,
             })();
             tap->lastSource=source;
             
+            const BOOL preventBecauseComingFromOtherApp=_preventReverseOtherApp?pid!=0:NO;
+
             // finally, do we reverse the scroll or not?
             const BOOL invert=(^BOOL {
                 
@@ -162,8 +216,6 @@ static CGEventRef _callback(CGEventTapProxy proxy,
                  This is useful if Scroll Reverser is running inside a remote desktop, to ignore
                  scrolling coming from the controlling host but still reverse local scrolling.
                  */
-                const BOOL preventBecauseComingFromOtherApp=_preventReverseOtherApp?pid!=0:NO;
-                
                 if ([[NSUserDefaults standardUserDefaults] boolForKey:PrefsReverseScrolling]&&!preventBecauseComingFromOtherApp)
                 {
                     switch (source)
@@ -197,40 +249,120 @@ static CGEventRef _callback(CGEventTapProxy proxy,
                 });
             }
 
-            // Adjust discrete scroll wheel?
-            const NSInteger stepsize=_stepsize();
-            const BOOL discreteAdjust=stepsize>0&&llabs(axis1)==1&&!continuous;
-            const NSInteger vstep=discreteAdjust?stepsize:1;
-            [tap->logger logSignedInteger:vstep forKey:@"vstep"];
-
-            // Calculate signed multiplier to apply
-            const NSInteger vmul=(invert&&[[NSUserDefaults standardUserDefaults] boolForKey:PrefsReverseVertical])?-vstep:vstep;
-            const NSInteger hmul=(invert&&[[NSUserDefaults standardUserDefaults] boolForKey:PrefsReverseHorizontal])?-1:1;
-
-            /* Do the actual reversing. It's worth noting we have to set the point values second, or we lose smooth scrolling.
-             This is because setting DeltaAxis causes macos to internally modify PointDeltaAxis (8x multiplier on DeltaAxis
-             value) and FixedPtDeltaAxis (1x multiplier). */
-            if (discreteAdjust||vmul!=1) { // vertical
-                CGEventSetIntegerValueField(eventRef, kCGScrollWheelEventDeltaAxis1, axis1*vmul);
+            NSUserDefaults *const defaults=[NSUserDefaults standardUserDefaults];
+            const BOOL zoomEnabled=[defaults boolForKey:PrefsModifierScrollZoomEnabled];
+            const NSInteger zoomModifier=[defaults integerForKey:PrefsModifierScrollZoomModifier];
+            const BOOL zoomModifierMatches=SRScrollZoomModifierMatches(CGEventGetFlags(eventRef), zoomModifier);
+            const double zoomY=SRScrollZoomNormalizedDelta(continuous, axis1, point_axis1, fixedpt_axis1);
+            const double zoomX=SRScrollZoomNormalizedDelta(continuous, axis2, point_axis2, fixedpt_axis2);
+            const BOOL verticalIntent=zoomY!=0.0&&fabs(zoomY)>=fabs(zoomX);
+            const BOOL zoomPhaseCanStart=phase==ScrollPhaseNormal;
+            pid_t zoomTargetPID=0;
+            if (tap.zoomCaptureActive||
+                (zoomEnabled&&source==ScrollEventSourceMouse&&zoomModifierMatches&&verticalIntent)) {
+                zoomTargetPID=_zoomTargetPID(eventRef);
             }
-            if (!discreteAdjust&&vmul!=1) { // vertical - only set these if not doing discrete adjust
-                CGEventSetDoubleValueField(eventRef, kCGScrollWheelEventFixedPtDeltaAxis1, fixedpt_axis1*vmul);
-                CGEventSetIntegerValueField(eventRef, kCGScrollWheelEventPointDeltaAxis1, point_axis1*vmul);
-                if (ioHidEventRef) {
-                    IOHIDEventSetFloatValue(ioHidEventRef, kIOHIDEventFieldScrollY, iohid_axis1*vmul);
+
+            SRScrollZoomState zoomState=tap.zoomState;
+            const BOOL zoomCaptureExpired=tap.zoomCaptureActive&&
+                (zoomState.lastInputNanoseconds==0||
+                 time<zoomState.lastInputNanoseconds||
+                 time-zoomState.lastInputNanoseconds>SRScrollZoomIdleResetNanoseconds);
+            const BOOL zoomCaptureTargetChanged=tap.zoomCaptureActive&&
+                zoomTargetPID>0&&zoomState.targetPID>0&&zoomTargetPID!=zoomState.targetPID;
+            const BOOL zoomCaptureInvalid=tap.zoomCaptureActive&&
+                (!continuous||source!=ScrollEventSourceMouse||!zoomEnabled||
+                 preventBecauseComingFromOtherApp||zoomCaptureExpired||
+                 zoomCaptureTargetChanged||tap.zoomCaptureModifier!=zoomModifier);
+            const BOOL zoomCaptureEndedByModifier=tap.zoomCaptureActive&&
+                SRScrollZoomShouldEndCaptureForModifier(zoomModifierMatches,
+                                                        phase==ScrollPhaseNormal);
+            if (zoomCaptureInvalid||zoomCaptureEndedByModifier) {
+                tap.zoomCaptureActive=NO;
+                SRScrollZoomResetState(&zoomState);
+            }
+
+            const BOOL beginZoomCapture=!tap.zoomCaptureActive&&zoomEnabled&&
+                source==ScrollEventSourceMouse&&!preventBecauseComingFromOtherApp&&
+                zoomModifierMatches&&verticalIntent&&zoomPhaseCanStart&&zoomTargetPID>0;
+            if (beginZoomCapture&&continuous) {
+                tap.zoomCaptureActive=YES;
+                tap.zoomCaptureModifier=zoomModifier;
+            }
+
+            const BOOL handleZoom=beginZoomCapture||tap.zoomCaptureActive;
+            if (handleZoom&&zoomTargetPID<=0) {
+                zoomTargetPID=zoomState.targetPID;
+            }
+
+            BOOL zoomConsumed=NO;
+            if (handleZoom&&zoomTargetPID>0) {
+                const BOOL reverseZoomDirection=invert&&[defaults boolForKey:PrefsReverseVertical];
+                const double effectiveZoomY=reverseZoomDirection?-zoomY:zoomY;
+                const BOOL suppressZoomEmission=!zoomModifierMatches||
+                    phase!=ScrollPhaseNormal;
+                const SRScrollZoomDirection zoomDirection=SRScrollZoomUpdateState(&zoomState,
+                                                                                  continuous,
+                                                                                  effectiveZoomY,
+                                                                                  suppressZoomEmission,
+                                                                                  time,
+                                                                                  zoomTargetPID);
+                const BOOL zoomPosted=zoomDirection!=SRScrollZoomDirectionNone&&
+                    _postApplicationZoom(zoomTargetPID, zoomDirection);
+                [tap->logger logBool:YES forKey:@"zoomConsumed"];
+                [tap->logger logIfYes:zoomPosted forKey:@"zoomPosted"];
+                [tap->logger logSignedInteger:zoomDirection forKey:@"zoomDirection"];
+                zoomConsumed=YES;
+
+                if (phase==ScrollPhaseEnd) {
+                    tap.zoomCaptureActive=NO;
+                    SRScrollZoomResetState(&zoomState);
                 }
             }
-            if (hmul!=1) { // horizontal
-                CGEventSetIntegerValueField(eventRef, kCGScrollWheelEventDeltaAxis2, axis2*hmul);
-                CGEventSetDoubleValueField(eventRef, kCGScrollWheelEventFixedPtDeltaAxis2, fixedpt_axis2*hmul);
-                CGEventSetIntegerValueField(eventRef, kCGScrollWheelEventPointDeltaAxis2, point_axis2*hmul);
-                if (ioHidEventRef) {
-                    IOHIDEventSetFloatValue(ioHidEventRef, kIOHIDEventFieldScrollX, iohid_axis2*vmul);
+            else if (!tap.zoomCaptureActive) {
+                SRScrollZoomResetState(&zoomState);
+            }
+            tap.zoomState=zoomState;
+
+            if (!zoomConsumed) {
+                // Adjust discrete scroll wheel?
+                const NSInteger stepsize=_stepsize();
+                const BOOL discreteAdjust=stepsize>0&&llabs(axis1)==1&&!continuous;
+                const NSInteger vstep=discreteAdjust?stepsize:1;
+                [tap->logger logSignedInteger:vstep forKey:@"vstep"];
+
+                // Calculate signed multiplier to apply
+                const NSInteger vmul=(invert&&[defaults boolForKey:PrefsReverseVertical])?-vstep:vstep;
+                const NSInteger hmul=(invert&&[defaults boolForKey:PrefsReverseHorizontal])?-1:1;
+
+                /* Do the actual reversing. It's worth noting we have to set the point values second, or we lose smooth scrolling.
+                 This is because setting DeltaAxis causes macos to internally modify PointDeltaAxis (8x multiplier on DeltaAxis
+                 value) and FixedPtDeltaAxis (1x multiplier). */
+                if (discreteAdjust||vmul!=1) { // vertical
+                    CGEventSetIntegerValueField(eventRef, kCGScrollWheelEventDeltaAxis1, axis1*vmul);
+                }
+                if (!discreteAdjust&&vmul!=1) { // vertical - only set these if not doing discrete adjust
+                    CGEventSetDoubleValueField(eventRef, kCGScrollWheelEventFixedPtDeltaAxis1, fixedpt_axis1*vmul);
+                    CGEventSetIntegerValueField(eventRef, kCGScrollWheelEventPointDeltaAxis1, point_axis1*vmul);
+                    if (ioHidEventRef) {
+                        IOHIDEventSetFloatValue(ioHidEventRef, kIOHIDEventFieldScrollY, iohid_axis1*vmul);
+                    }
+                }
+                if (hmul!=1) { // horizontal
+                    CGEventSetIntegerValueField(eventRef, kCGScrollWheelEventDeltaAxis2, axis2*hmul);
+                    CGEventSetDoubleValueField(eventRef, kCGScrollWheelEventFixedPtDeltaAxis2, fixedpt_axis2*hmul);
+                    CGEventSetIntegerValueField(eventRef, kCGScrollWheelEventPointDeltaAxis2, point_axis2*hmul);
+                    if (ioHidEventRef) {
+                        IOHIDEventSetFloatValue(ioHidEventRef, kIOHIDEventFieldScrollX, iohid_axis2*vmul);
+                    }
                 }
             }
 
             if (ioHidEventRef) {
                 CFRelease(ioHidEventRef);
+            }
+            if (zoomConsumed) {
+                result=NULL;
             }
         }
         else
@@ -242,15 +374,8 @@ static CGEventRef _callback(CGEventTapProxy proxy,
         [tap->logger logParams];
     }
     
-    return eventRef;
+    return result;
 }
-
-@interface MouseTap ()
-@property CFMachPortRef activeTapPort;
-@property CFRunLoopSourceRef activeTapSource;
-@property CFMachPortRef passiveTapPort;
-@property CFRunLoopSourceRef passiveTapSource;
-@end
 
 @implementation MouseTap
 
@@ -283,6 +408,10 @@ static CGEventRef _callback(CGEventTapProxy proxy,
     touching=0;
     lastTouchTime=0;
     lastSource=0;
+    self.zoomCaptureActive=NO;
+    self.zoomCaptureModifier=SRScrollZoomModifierControl;
+    SRScrollZoomState zoomState={0};
+    self.zoomState=zoomState;
     
     /* We use a separate passive tap to monitor gesture events, because using an
      active tap to do so causes various problems:
@@ -333,6 +462,10 @@ static CGEventRef _callback(CGEventTapProxy proxy,
 - (void)stop
 {
     [self willChangeValueForKey:kKeyActive];
+
+    self.zoomCaptureActive=NO;
+    SRScrollZoomState zoomState={0};
+    self.zoomState=zoomState;
 
     if (self.activeTapSource) {
         CFRunLoopRemoveSource(CFRunLoopGetMain(), self.activeTapSource, kCFRunLoopCommonModes);

@@ -10,6 +10,15 @@ for example: `Accessibility permission: ⛔️ required` */
 /* Preferences pane for `App` settings */
 "App" = "程式";
 
+/* Prefs section header */
+"Application Zoom" = "應用程式縮放";
+
+/* Prefs label */
+"Modifier key" = "修飾鍵";
+
+/* Prefs check box */
+"Zoom with modifier + mouse wheel" = "使用修飾鍵 + 滑鼠滾輪縮放";
+
 /* Check box next to the 'Check for updates' button */
 "Automatically" = "自動更新";
 

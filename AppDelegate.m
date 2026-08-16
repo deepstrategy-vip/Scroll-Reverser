@@ -22,6 +22,8 @@ NSString *const PrefsAppcastOverrideURL=@"AppcastOverrideURL";
 NSString *const PrefsTerminatedWithPrefsWindowOpen=@"TerminatedWithPrefsWindowOpen";
 NSString *const PrefsDiscreteScrollStepSize=@"DiscreteScrollStepSize";
 NSString *const PrefsShowDiscreteScrollOptions=@"ShowDiscreteScrollOptions";
+NSString *const PrefsModifierScrollZoomEnabled=@"ModifierScrollZoomEnabled";
+NSString *const PrefsModifierScrollZoomModifier=@"ModifierScrollZoomModifier";
 
 static void *_contextHideIcon=&_contextHideIcon;
 static void *_contextEnabled=&_contextEnabled;
@@ -149,6 +151,8 @@ static void *_contextPermissions=&_contextPermissions;
             PrefsReverseTrackpad: @(YES),
             PrefsReverseMouse: @(YES),
             PrefsDiscreteScrollStepSize: @(3),
+            PrefsModifierScrollZoomEnabled: @(NO),
+            PrefsModifierScrollZoomModifier: @(SRScrollZoomModifierControl),
             LoggerMaxEntries: @(50000),
             PrefsBetaUpdates: @([self appIsBetaBuild]),
         }];
@@ -279,6 +283,9 @@ static void *_contextPermissions=&_contextPermissions;
     temp=[temp stringByAppendingString:yn(@"h", [[NSUserDefaults standardUserDefaults] boolForKey:PrefsReverseHorizontal])];
     temp=[temp stringByAppendingString:yn(@"trackpad", [[NSUserDefaults standardUserDefaults] boolForKey:PrefsReverseTrackpad])];
     temp=[temp stringByAppendingString:yn(@"mouse", [[NSUserDefaults standardUserDefaults] boolForKey:PrefsReverseMouse])];
+    temp=[temp stringByAppendingString:yn(@"appZoom", [[NSUserDefaults standardUserDefaults] boolForKey:PrefsModifierScrollZoomEnabled])];
+    const NSInteger modifier=[[NSUserDefaults standardUserDefaults] integerForKey:PrefsModifierScrollZoomModifier];
+    temp=[temp stringByAppendingFormat:@"[zoomModifier %@]", modifier==SRScrollZoomModifierCommand?@"command":@"control"];
     return temp;
 }
 
@@ -468,4 +475,3 @@ static void *_contextPermissions=&_contextPermissions;
 }
 
 @end
-

@@ -9,6 +9,15 @@
 /* Preferences pane for `App` settings */
 "App" = "App";
 
+/* Prefs section header */
+"Application Zoom" = "Application Zoom";
+
+/* Prefs label */
+"Modifier key" = "Modifier key";
+
+/* Prefs check box */
+"Zoom with modifier + mouse wheel" = "Zoom with modifier + mouse wheel";
+
 /* Check box next to the 'Check for updates' button */
 "Automatically" = "Automatically";
 
@@ -98,4 +107,3 @@
 
 /* No comment provided by engineer. */
 "✅ granted" = "✅ granted";
-

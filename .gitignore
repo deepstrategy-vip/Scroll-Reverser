@@ -1,9 +1,9 @@
 # xcode stuff
 xcuserdata/
+build/
 
 # build script logfiles
 *.log
 
 # mac stuff
 .DS_Store
-

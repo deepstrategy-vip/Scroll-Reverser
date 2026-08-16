@@ -19,14 +19,14 @@
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <userDefaultsController representsSharedInstance="YES" id="9eJ-Lx-koC"/>
         <view misplaced="YES" id="Ly3-tV-h1E" userLabel="Scrolling Settings">
-            <rect key="frame" x="0.0" y="0.0" width="458" height="433"/>
+            <rect key="frame" x="0.0" y="0.0" width="458" height="537"/>
             <autoresizingMask key="autoresizingMask"/>
             <subviews>
                 <stackView distribution="fill" orientation="vertical" alignment="leading" spacing="17" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7x2-oY-UOa">
-                    <rect key="frame" x="20" y="20" width="418" height="393"/>
+                    <rect key="frame" x="20" y="20" width="418" height="497"/>
                     <subviews>
                         <button horizontalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="X8x-9H-QTO">
-                            <rect key="frame" x="160" y="378" width="96" height="16"/>
+                            <rect key="frame" x="160" y="482" width="96" height="16"/>
                             <buttonCell key="cell" type="check" title="ON OR OFF" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="dpQ-7R-OJ2">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                 <font key="font" metaFont="system"/>
@@ -49,7 +49,7 @@
                             </connections>
                         </button>
                         <stackView distribution="fill" orientation="horizontal" alignment="top" horizontalStackHuggingPriority="250" verticalStackHuggingPriority="750" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="oof-kn-mtG" userLabel="Axes &amp; Devices Stack View">
-                            <rect key="frame" x="0.0" y="290" width="418" height="72"/>
+                            <rect key="frame" x="0.0" y="394" width="418" height="72"/>
                             <subviews>
                                 <box autoresizesSubviews="NO" borderType="line" title="AXES" translatesAutoresizingMaskIntoConstraints="NO" id="XNk-AX-zB1">
                                     <rect key="frame" x="-3" y="-4" width="211" height="76"/>
@@ -181,6 +181,75 @@
                                 </binding>
                             </connections>
                         </stackView>
+                        <box identifier="ApplicationZoomBox" title="APPLICATION ZOOM" translatesAutoresizingMaskIntoConstraints="NO" id="YxA-pp-Zm1" userLabel="Application Zoom Box">
+                            <rect key="frame" x="-3" y="290" width="424" height="87"/>
+                            <view key="contentView" id="VZo-om-Ct1">
+                                <rect key="frame" x="4" y="5" width="416" height="67"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                <subviews>
+                                    <button horizontalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ZEn-ab-Led">
+                                        <rect key="frame" x="11" y="43" width="236" height="18"/>
+                                        <buttonCell key="cell" type="check" title="ZOOM WITH MODIFIER + MOUSE WHEEL" bezelStyle="regularSquare" imagePosition="left" inset="2" id="VoL-cH-kbx">
+                                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                            <font key="font" metaFont="system"/>
+                                        </buttonCell>
+                                        <connections>
+                                            <binding destination="-2" name="enabled" keyPath="appDelegate.enabled" id="ZEn-EN-app"/>
+                                            <binding destination="-2" name="title" keyPath="self.menuStringModifierScrollZoom" id="ZEn-TI-tle"/>
+                                            <binding destination="9eJ-Lx-koC" name="value" keyPath="values.ModifierScrollZoomEnabled" id="ZEn-VA-lue"/>
+                                        </connections>
+                                    </button>
+                                    <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Mod-if-Ier">
+                                        <rect key="frame" x="11" y="10" width="82" height="16"/>
+                                        <textFieldCell key="cell" lineBreakMode="clipping" title="MODIFIER KEY" id="Mod-if-Cell">
+                                            <font key="font" metaFont="system"/>
+                                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                        </textFieldCell>
+                                        <connections>
+                                            <binding destination="-2" name="value" keyPath="self.menuStringModifierKey" id="Mod-VA-lue"/>
+                                        </connections>
+                                    </textField>
+                                    <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Pop-Up-Zom">
+                                        <rect key="frame" x="105" y="5" width="126" height="25"/>
+                                        <popUpButtonCell key="cell" type="push" title="⌃ Control" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="-1" imageScaling="proportionallyDown" inset="2" pullsDown="NO" arrowPosition="arrowAtCenter" preferredEdge="maxY" selectedItem="Ctr-lI-tem" id="Pop-Up-Cell">
+                                            <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                            <font key="font" metaFont="menu"/>
+                                            <menu key="menu" title="Modifier" id="Pop-Up-Menu">
+                                                <items>
+                                                    <menuItem title="⌃ Control" state="on" id="Ctr-lI-tem"/>
+                                                    <menuItem title="⌘ Command" tag="1" id="Cmd-lI-tem"/>
+                                                </items>
+                                            </menu>
+                                        </popUpButtonCell>
+                                        <connections>
+                                            <binding destination="-2" name="enabled" keyPath="appDelegate.enabled" id="Pop-EN-app"/>
+                                            <binding destination="9eJ-Lx-koC" name="enabled2" keyPath="values.ModifierScrollZoomEnabled" previousBinding="Pop-EN-app" id="Pop-EN-zom"/>
+                                            <binding destination="9eJ-Lx-koC" name="selectedTag" keyPath="values.ModifierScrollZoomModifier" id="Pop-SE-tag"/>
+                                        </connections>
+                                    </popUpButton>
+                                </subviews>
+                                <constraints>
+                                    <constraint firstItem="ZEn-ab-Led" firstAttribute="leading" secondItem="VZo-om-Ct1" secondAttribute="leading" constant="14" id="Zom-Ck-Led"/>
+                                    <constraint firstItem="ZEn-ab-Led" firstAttribute="top" secondItem="VZo-om-Ct1" secondAttribute="top" constant="8" id="Zom-Ck-Top"/>
+                                    <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="ZEn-ab-Led" secondAttribute="trailing" constant="14" id="Zom-Ck-Tra"/>
+                                    <constraint firstItem="Mod-if-Ier" firstAttribute="leading" secondItem="VZo-om-Ct1" secondAttribute="leading" constant="14" id="Zom-Lb-Led"/>
+                                    <constraint firstItem="Pop-Up-Zom" firstAttribute="leading" secondItem="Mod-if-Ier" secondAttribute="trailing" constant="12" id="Zom-Pp-Led"/>
+                                    <constraint firstItem="Pop-Up-Zom" firstAttribute="top" secondItem="ZEn-ab-Led" secondAttribute="bottom" constant="8" id="Zom-Pp-Top"/>
+                                    <constraint firstAttribute="bottom" secondItem="Pop-Up-Zom" secondAttribute="bottom" constant="8" id="Zom-Pp-Bot"/>
+                                    <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="Pop-Up-Zom" secondAttribute="trailing" constant="14" id="Zom-Pp-Tra"/>
+                                    <constraint firstItem="Mod-if-Ier" firstAttribute="centerY" secondItem="Pop-Up-Zom" secondAttribute="centerY" id="Zom-Lb-Cen"/>
+                                </constraints>
+                            </view>
+                            <connections>
+                                <binding destination="-2" name="hidden" keyPath="appDelegate.permissionsManager.hasAllRequiredPermissions" id="Zom-HI-den">
+                                    <dictionary key="options">
+                                        <string key="NSValueTransformerName">NSNegateBoolean</string>
+                                    </dictionary>
+                                </binding>
+                                <binding destination="-2" name="title" keyPath="self.menuStringApplicationZoomHeader" id="Zom-TI-tle"/>
+                            </connections>
+                        </box>
                         <box title="DISCRETE SCROLL" translatesAutoresizingMaskIntoConstraints="NO" id="rKG-9G-Xv9" userLabel="Scroll Wheel Box">
                             <rect key="frame" x="-3" y="193" width="424" height="80"/>
                             <view key="contentView" id="XpO-OG-poD">
@@ -432,6 +501,8 @@
                         <constraint firstItem="X8x-9H-QTO" firstAttribute="centerX" secondItem="7x2-oY-UOa" secondAttribute="centerX" id="Iwf-tG-lvL"/>
                         <constraint firstItem="oof-kn-mtG" firstAttribute="leading" secondItem="7x2-oY-UOa" secondAttribute="leading" id="Nvt-bp-OHV"/>
                         <constraint firstAttribute="trailing" secondItem="oof-kn-mtG" secondAttribute="trailing" id="Qgb-cq-Sd5"/>
+                        <constraint firstItem="YxA-pp-Zm1" firstAttribute="leading" secondItem="7x2-oY-UOa" secondAttribute="leading" id="Zom-Bx-Led"/>
+                        <constraint firstAttribute="trailing" secondItem="YxA-pp-Zm1" secondAttribute="trailing" id="Zom-Bx-Tra"/>
                         <constraint firstAttribute="trailing" secondItem="NxL-q2-zhr" secondAttribute="trailing" id="yxQ-e2-oMj"/>
                     </constraints>
                     <visibilityPriorities>
@@ -439,8 +510,10 @@
                         <integer value="1000"/>
                         <integer value="1000"/>
                         <integer value="1000"/>
+                        <integer value="1000"/>
                     </visibilityPriorities>
                     <customSpacing>
+                        <real value="3.4028234663852886e+38"/>
                         <real value="3.4028234663852886e+38"/>
                         <real value="3.4028234663852886e+38"/>
                         <real value="3.4028234663852886e+38"/>

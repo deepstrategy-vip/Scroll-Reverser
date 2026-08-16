@@ -44,6 +44,9 @@
 @property (readonly) NSString *menuStringMouseWheelStepSize;
 @property (readonly) NSString *menuStringMouseWheelStepMin;
 @property (readonly) NSString *menuStringMouseWheelStepMax;
+@property (readonly) NSString *menuStringApplicationZoomHeader;
+@property (readonly) NSString *menuStringModifierScrollZoom;
+@property (readonly) NSString *menuStringModifierKey;
 
 - (IBAction)buttonPermissionsHelpClicked:(id)sender;
 - (IBAction)buttonCheckForUpdatesClicked:(id)sender;

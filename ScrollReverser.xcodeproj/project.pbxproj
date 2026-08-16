@@ -37,6 +37,7 @@
 		256AC3DA0F4B6AC300CF3369 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 256AC3D90F4B6AC300CF3369 /* AppDelegate.m */; };
 		8D11072D0486CEB800E47090 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; settings = {ATTRIBUTES = (); }; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		A7A28A1E2D00000100A11CE0 /* ModifierScrollZoom.m in Sources */ = {isa = PBXBuildFile; fileRef = A7A28A1D2D00000100A11CE0 /* ModifierScrollZoom.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -135,6 +136,8 @@
 		88AC80572405185D00063181 /* es */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = es; path = resources/es.lproj/Localizable.strings; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* ScrollReverser-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "ScrollReverser-Info.plist"; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* Scroll Reverser (Dev).app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Scroll Reverser (Dev).app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A7A28A1C2D00000100A11CE0 /* ModifierScrollZoom.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ModifierScrollZoom.h; sourceTree = "<group>"; };
+		A7A28A1D2D00000100A11CE0 /* ModifierScrollZoom.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ModifierScrollZoom.m; sourceTree = "<group>"; };
 		B7CF5D6627BFAB8400E09485 /* IOKitSPI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IOKitSPI.h; sourceTree = "<group>"; };
 		B7CF5D6727BFACD800E09485 /* CoreGraphicsSPI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CoreGraphicsSPI.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -182,6 +185,8 @@
 				01D9F8922386D5C1002F0EC0 /* PermissionsManager.m */,
 				01EB78C21324D574005390BD /* MouseTap.m */,
 				01EB78C31324D574005390BD /* MouseTap.h */,
+				A7A28A1C2D00000100A11CE0 /* ModifierScrollZoom.h */,
+				A7A28A1D2D00000100A11CE0 /* ModifierScrollZoom.m */,
 				01ED37DD1A375EB9001B3094 /* LinkView.h */,
 				01ED37DE1A375EB9001B3094 /* LinkView.m */,
 				0183EE711A37947E00A260E0 /* Application.h */,
@@ -409,6 +414,7 @@
 				256AC3DA0F4B6AC300CF3369 /* AppDelegate.m in Sources */,
 				01ED37DF1A375EB9001B3094 /* LinkView.m in Sources */,
 				01EB78C41324D574005390BD /* MouseTap.m in Sources */,
+				A7A28A1E2D00000100A11CE0 /* ModifierScrollZoom.m in Sources */,
 				01438E931AFB7BC100C5C857 /* LoggerScrollView.m in Sources */,
 				01438E601AFB467100C5C857 /* DebugWindowController.m in Sources */,
 				01438E901AFB640400C5C857 /* Logger.m in Sources */,
