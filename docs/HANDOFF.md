@@ -19,7 +19,9 @@ A local Developer ID-signed build is installed at
 `~/Applications/Scroll Reverser Zoom.app` with bundle identifier
 `com.deepstrategy.scroll-reverser-zoom`. It is configured for vertical regular
 mouse reversal, no trackpad reversal, and Control + wheel application zoom.
-LinearMouse remains installed but is not running.
+The installed binary was assembled from source commit `2e0c210`. LinearMouse
+remains installed but is not running and has been removed from login items;
+Scroll Reverser Zoom is registered to start at login.
 
 ## Design decisions
 
@@ -61,6 +63,8 @@ LinearMouse remains installed but is not running.
 - The installed defaults were verified with the master switch on,
   `ReverseMouse=1`, `ReverseTrackpad=0`, `ReverseY=1`,
   `ModifierScrollZoomEnabled=1`, and Control selected as the modifier.
+- Login-item verification reports `ProxyBridge, Scroll Reverser Zoom`;
+  LinearMouse is no longer registered to launch automatically.
 - End-to-end session event tests passed against the running installed app:
   an ordinary `+1` wheel event was observed downstream as reversed
   `axis1=-3, point1=-24`, and a Control + wheel event produced the tagged
@@ -88,3 +92,5 @@ Before treating the fork as a distributable release:
 
 The generated `build/` artifact is intentionally ignored. The installed app is
 kept running for the user's physical test but is not a notarized release.
+To roll back, turn off **Start at login** in Scroll Reverser Zoom, quit it, and
+re-enable LinearMouse's login item; no source or repository rollback is needed.
