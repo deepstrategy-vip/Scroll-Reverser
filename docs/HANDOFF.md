@@ -14,6 +14,9 @@ default and is exposed in the Scrolling pane as **Application Zoom**. It only
 handles regular-mouse vertical scroll events whose modifier chord exactly
 matches the selected Control or Command setting. The original wheel event is
 consumed and the target application receives Command + keypad plus/minus.
+WizNote (`cn.wiznote.desktop`) is a targeted compatibility exception: zoom in
+uses its declared main-keyboard Command+= shortcut, while zoom out and other
+applications keep the existing keypad mapping.
 
 A local Developer ID-signed build is installed at
 `~/Applications/Scroll Reverser Zoom.app` with bundle identifier
@@ -21,7 +24,7 @@ A local Developer ID-signed build is installed at
 mouse reversal, no trackpad reversal, and logical Command + wheel application
 zoom. Karabiner globally swaps Control and Command on this Mac, so the selected
 logical Command trigger is activated by the user's physical Control key.
-The installed binary was assembled from source commit `2e0c210`. LinearMouse
+The installed binary was assembled from source commit `3f45a2f`. LinearMouse
 remains installed but is not running and has been removed from login items;
 Scroll Reverser Zoom is registered to start at login.
 
@@ -32,6 +35,9 @@ Scroll Reverser Zoom is registered to start at login.
   Scroll Reverser setting.
 - The original event's target PID is preferred; the foreground application is a
   fallback. State resets when the target changes.
+- Application-specific key mapping is limited to confirmed incompatibilities.
+  WizNote ignores keypad plus for zoom in, so only that bundle and direction
+  receive main-keyboard Command+=; no shortcut is double-posted.
 - Discrete wheels emit one shortcut per detent. Continuous wheels use a 24-point
   accumulator, a 50 ms emission gate, and a 180 ms idle reset.
 - Momentum tails are consumed without emitting extra shortcuts. Releasing the
@@ -45,6 +51,8 @@ Scroll Reverser Zoom is registered to start at login.
 ## Verification completed
 
 - `./tests/run-unit-tests.sh`: passed.
+- Focused mapping tests cover WizNote zoom in/out, Chrome, unknown and nil
+  bundle identifiers, the no-direction case, and Command-without-Shift flags.
 - Objective-C source syntax/link check with the Command Line Tools SDK: passed;
   only two pre-existing `dispatch_after(0.05, ...)` conversion warnings remain
   in upstream debug/test window controllers.
@@ -77,6 +85,11 @@ Scroll Reverser Zoom is registered to start at login.
   `keyCode 55` with the Command flag. After selecting logical Command, three
   physical Control + GPW5 wheel events were all consumed by the zoom path and
   none leaked downstream; the user confirmed Chrome page zoom works.
+- After installing the `3f45a2f` build, an end-to-end event test targeted
+  WizNote and captured the application-bound synthetic key as key code 24
+  (main-keyboard `=`), Command set, and Shift clear. The one test zoom-in step
+  was immediately balanced with one zoom-out step so the user's note view was
+  not left altered.
 - Independent core review found no blocking memory-management, event-consumption,
   recursion, modifier-release, or PID-routing issue.
 
