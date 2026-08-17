@@ -25,8 +25,9 @@ mouse reversal, no trackpad reversal, and logical Command + wheel application
 zoom. Karabiner globally swaps Control and Command on this Mac, so the selected
 logical Command trigger is activated by the user's physical Control key.
 The installed binary was assembled from source commit `3f45a2f`. LinearMouse
-remains installed but is not running and has been removed from login items;
-Scroll Reverser Zoom is registered to start at login.
+0.11.4 has been fully uninstalled: its application, configuration, preferences,
+caches, HTTP storage, recent-items record, and Accessibility authorization were
+removed. Scroll Reverser Zoom is registered to start at login.
 
 ## Design decisions
 
@@ -75,7 +76,8 @@ Scroll Reverser Zoom is registered to start at login.
   `ModifierScrollZoomEnabled=1`, and logical Command selected as the modifier
   (`ModifierScrollZoomModifier=1`).
 - Login-item verification reports `ProxyBridge, Scroll Reverser Zoom`;
-  LinearMouse is no longer registered to launch automatically.
+  LinearMouse has no process, login/background item, launch service, installed
+  bundle, dedicated data path, or TCC record remaining.
 - End-to-end session event tests passed against the running installed app:
   an ordinary `+1` wheel event was observed downstream as reversed
   `axis1=-3, point1=-24`, and a Control + wheel event produced the tagged
@@ -113,5 +115,6 @@ Before treating the fork as a distributable release:
 
 The generated `build/` artifact is intentionally ignored. The installed app is
 kept running for the ongoing stutter observation but is not a notarized release.
-To roll back, turn off **Start at login** in Scroll Reverser Zoom, quit it, and
-re-enable LinearMouse's login item; no source or repository rollback is needed.
+To roll back, turn off **Start at login** in Scroll Reverser Zoom, quit it, then
+restore LinearMouse and its configuration from Trash or reinstall it; no source
+or repository rollback is needed.
