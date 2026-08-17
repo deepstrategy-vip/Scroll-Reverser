@@ -72,10 +72,33 @@ static pid_t _zoomTargetPID(CGEventRef eventRef)
     return [NSWorkspace sharedWorkspace].frontmostApplication.processIdentifier;
 }
 
+static NSString *_zoomTargetBundleIdentifier(pid_t targetPID)
+{
+    NSRunningApplication *const target=
+        [NSRunningApplication runningApplicationWithProcessIdentifier:targetPID];
+    if (target.bundleIdentifier.length>0) {
+        return target.bundleIdentifier;
+    }
+
+    NSRunningApplication *const frontmost=[NSWorkspace sharedWorkspace].frontmostApplication;
+    if (frontmost.processIdentifier==targetPID) {
+        return frontmost.bundleIdentifier;
+    }
+    return nil;
+}
+
 static BOOL _postApplicationZoom(pid_t targetPID, SRScrollZoomDirection direction)
 {
-    const CGKeyCode keyCode=SRScrollZoomKeyCodeForDirection(direction);
-    if (targetPID<=0||keyCode==UINT16_MAX) {
+    if (targetPID<=0) {
+        return NO;
+    }
+
+    NSString *const bundleIdentifier=direction==SRScrollZoomDirectionIn ?
+        _zoomTargetBundleIdentifier(targetPID) : nil;
+    const CGKeyCode keyCode=SRScrollZoomKeyCodeForDirectionAndBundleIdentifier(
+        direction,
+        bundleIdentifier);
+    if (keyCode==UINT16_MAX) {
         return NO;
     }
 

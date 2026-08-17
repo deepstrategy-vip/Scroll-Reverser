@@ -10,6 +10,7 @@ const double SRScrollZoomContinuousThresholdPoints=24.0;
 const uint64_t SRScrollZoomIdleResetNanoseconds=180000000;
 const uint64_t SRScrollZoomMinimumEmissionIntervalNanoseconds=50000000;
 const int64_t SRScrollZoomSyntheticEventTag=0x53525A4F4F4D; // "SRZOOM"
+static NSString *const SRWizNoteBundleIdentifier=@"cn.wiznote.desktop";
 
 static SRScrollZoomModifier _sanitizedModifier(NSInteger modifierSetting)
 {
@@ -85,6 +86,19 @@ CGKeyCode SRScrollZoomKeyCodeForDirection(SRScrollZoomDirection direction)
         default:
             return UINT16_MAX;
     }
+}
+
+CGKeyCode SRScrollZoomKeyCodeForDirectionAndBundleIdentifier(
+    SRScrollZoomDirection direction,
+    NSString *bundleIdentifier)
+{
+    // WizNote declares zoom in as Command+= and ignores the numeric-keypad
+    // plus key that is accepted by most applications.
+    if (direction==SRScrollZoomDirectionIn&&
+        [bundleIdentifier isEqualToString:SRWizNoteBundleIdentifier]) {
+        return kVK_ANSI_Equal;
+    }
+    return SRScrollZoomKeyCodeForDirection(direction);
 }
 
 CGEventFlags SRScrollZoomOutputEventFlags(SRScrollZoomDirection direction)

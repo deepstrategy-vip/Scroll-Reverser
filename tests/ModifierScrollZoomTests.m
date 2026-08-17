@@ -43,8 +43,20 @@ static void TestDeltaNormalizationAndDirection(void)
     assert(SRScrollZoomKeyCodeForDirection(SRScrollZoomDirectionIn)==kVK_ANSI_KeypadPlus);
     assert(SRScrollZoomKeyCodeForDirection(SRScrollZoomDirectionOut)==kVK_ANSI_KeypadMinus);
     assert(SRScrollZoomKeyCodeForDirection(SRScrollZoomDirectionNone)==UINT16_MAX);
+    assert(SRScrollZoomKeyCodeForDirectionAndBundleIdentifier(
+               SRScrollZoomDirectionIn, @"cn.wiznote.desktop")==kVK_ANSI_Equal);
+    assert(SRScrollZoomKeyCodeForDirectionAndBundleIdentifier(
+               SRScrollZoomDirectionOut, @"cn.wiznote.desktop")==kVK_ANSI_KeypadMinus);
+    assert(SRScrollZoomKeyCodeForDirectionAndBundleIdentifier(
+               SRScrollZoomDirectionIn, @"com.google.Chrome")==kVK_ANSI_KeypadPlus);
+    assert(SRScrollZoomKeyCodeForDirectionAndBundleIdentifier(
+               SRScrollZoomDirectionIn, nil)==kVK_ANSI_KeypadPlus);
+    assert(SRScrollZoomKeyCodeForDirectionAndBundleIdentifier(
+               SRScrollZoomDirectionNone, @"cn.wiznote.desktop")==UINT16_MAX);
     assert(SRScrollZoomOutputEventFlags(SRScrollZoomDirectionIn)==kCGEventFlagMaskCommand);
     assert(SRScrollZoomOutputEventFlags(SRScrollZoomDirectionOut)==kCGEventFlagMaskCommand);
+    assert((SRScrollZoomOutputEventFlags(SRScrollZoomDirectionIn)&
+            kCGEventFlagMaskShift)==0);
     assert(SRScrollZoomShouldEndCaptureForModifier(NO, YES));
     assert(!SRScrollZoomShouldEndCaptureForModifier(NO, NO));
     assert(!SRScrollZoomShouldEndCaptureForModifier(YES, YES));

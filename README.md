@@ -19,7 +19,9 @@ This fork adds an optional application zoom action for regular mice:
 The feature is disabled by default. Enable Scroll Reverser, then open its
 **Scrolling** preferences and enable **Zoom applications with modifier + mouse
 wheel** under **Application Zoom**. Applications that do not implement the
-standard Command-plus/Command-minus shortcuts may not respond.
+standard Command-plus/Command-minus shortcuts may not respond. WizNote is
+handled explicitly because its zoom-in menu accepts main-keyboard Command+=
+but not the numeric-keypad plus shortcut used by most supported applications.
 
 If macOS's system-wide Accessibility zoom is assigned to the same modifier and
 scroll gesture, disable one of the two bindings to avoid conflicting behavior.

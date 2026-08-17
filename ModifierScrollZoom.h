@@ -36,6 +36,9 @@ double SRScrollZoomNormalizedDelta(BOOL continuous,
                                    double fixedPointDelta);
 SRScrollZoomDirection SRScrollZoomDirectionForDelta(double delta, BOOL reverseVertical);
 CGKeyCode SRScrollZoomKeyCodeForDirection(SRScrollZoomDirection direction);
+CGKeyCode SRScrollZoomKeyCodeForDirectionAndBundleIdentifier(
+    SRScrollZoomDirection direction,
+    NSString *bundleIdentifier);
 CGEventFlags SRScrollZoomOutputEventFlags(SRScrollZoomDirection direction);
 BOOL SRScrollZoomShouldEndCaptureForModifier(BOOL modifierMatches, BOOL phaseIsNormal);
 void SRScrollZoomResetState(SRScrollZoomState *state);
