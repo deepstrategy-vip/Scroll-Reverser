@@ -48,6 +48,10 @@ static void TestDeltaNormalizationAndDirection(void)
     assert(SRScrollZoomKeyCodeForDirectionAndBundleIdentifier(
                SRScrollZoomDirectionOut, @"cn.wiznote.desktop")==kVK_ANSI_KeypadMinus);
     assert(SRScrollZoomKeyCodeForDirectionAndBundleIdentifier(
+               SRScrollZoomDirectionIn, @"com.pdfeditor.pdfeditormac")==kVK_ANSI_Equal);
+    assert(SRScrollZoomKeyCodeForDirectionAndBundleIdentifier(
+               SRScrollZoomDirectionOut, @"com.pdfeditor.pdfeditormac")==kVK_ANSI_KeypadMinus);
+    assert(SRScrollZoomKeyCodeForDirectionAndBundleIdentifier(
                SRScrollZoomDirectionIn, @"com.google.Chrome")==kVK_ANSI_KeypadPlus);
     assert(SRScrollZoomKeyCodeForDirectionAndBundleIdentifier(
                SRScrollZoomDirectionIn, nil)==kVK_ANSI_KeypadPlus);

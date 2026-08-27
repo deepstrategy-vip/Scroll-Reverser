@@ -10,7 +10,21 @@ const double SRScrollZoomContinuousThresholdPoints=24.0;
 const uint64_t SRScrollZoomIdleResetNanoseconds=180000000;
 const uint64_t SRScrollZoomMinimumEmissionIntervalNanoseconds=50000000;
 const int64_t SRScrollZoomSyntheticEventTag=0x53525A4F4F4D; // "SRZOOM"
-static NSString *const SRWizNoteBundleIdentifier=@"cn.wiznote.desktop";
+
+// Applications that bind zoom in to Command+= on the main row and ignore the
+// numeric-keypad plus key accepted by most applications.
+static BOOL _zoomInPrefersMainRowEqual(NSString *bundleIdentifier)
+{
+    static NSSet<NSString *> *bundleIdentifiers;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        bundleIdentifiers=[NSSet setWithObjects:
+            @"cn.wiznote.desktop",          // WizNote
+            @"com.pdfeditor.pdfeditormac",  // PDFgear
+            nil];
+    });
+    return bundleIdentifier!=nil&&[bundleIdentifiers containsObject:bundleIdentifier];
+}
 
 static SRScrollZoomModifier _sanitizedModifier(NSInteger modifierSetting)
 {
@@ -92,10 +106,8 @@ CGKeyCode SRScrollZoomKeyCodeForDirectionAndBundleIdentifier(
     SRScrollZoomDirection direction,
     NSString *bundleIdentifier)
 {
-    // WizNote declares zoom in as Command+= and ignores the numeric-keypad
-    // plus key that is accepted by most applications.
     if (direction==SRScrollZoomDirectionIn&&
-        [bundleIdentifier isEqualToString:SRWizNoteBundleIdentifier]) {
+        _zoomInPrefersMainRowEqual(bundleIdentifier)) {
         return kVK_ANSI_Equal;
     }
     return SRScrollZoomKeyCodeForDirection(direction);
