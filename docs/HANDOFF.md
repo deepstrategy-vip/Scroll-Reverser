@@ -2,7 +2,7 @@
 
 ## Current state
 
-- Date: 2026-08-17
+- Date: 2026-08-27
 - Task mode: release (local signed installation; no public release)
 - Branch: `feature/modifier-scroll-zoom`
 - Upstream base: `pilotmoon/scroll-reverser` at `187bf39`
@@ -14,9 +14,11 @@ default and is exposed in the Scrolling pane as **Application Zoom**. It only
 handles regular-mouse vertical scroll events whose modifier chord exactly
 matches the selected Control or Command setting. The original wheel event is
 consumed and the target application receives Command + keypad plus/minus.
-WizNote (`cn.wiznote.desktop`) is a targeted compatibility exception: zoom in
-uses its declared main-keyboard Command+= shortcut, while zoom out and other
-applications keep the existing keypad mapping.
+Applications that bind zoom in to main-keyboard Command+= and ignore the
+keypad plus key are handled through a bundle-identifier compatibility set;
+zoom out and all other applications keep the existing keypad mapping. The set
+currently contains WizNote (`cn.wiznote.desktop`) and PDFgear
+(`com.pdfeditor.pdfeditormac`).
 
 A local Developer ID-signed build is installed at
 `~/Applications/Scroll Reverser Zoom.app` with bundle identifier
@@ -24,7 +26,7 @@ A local Developer ID-signed build is installed at
 mouse reversal, no trackpad reversal, and logical Command + wheel application
 zoom. Karabiner globally swaps Control and Command on this Mac, so the selected
 logical Command trigger is activated by the user's physical Control key.
-The installed binary was assembled from source commit `3f45a2f`. LinearMouse
+The installed binary (1.9.2) was assembled from source commit `d8ef1b7`. LinearMouse
 0.11.4 has been fully uninstalled: its application, configuration, preferences,
 caches, HTTP storage, recent-items record, and Accessibility authorization were
 removed. Scroll Reverser Zoom is registered to start at login.
@@ -36,9 +38,10 @@ removed. Scroll Reverser Zoom is registered to start at login.
   Scroll Reverser setting.
 - The original event's target PID is preferred; the foreground application is a
   fallback. State resets when the target changes.
-- Application-specific key mapping is limited to confirmed incompatibilities.
-  WizNote ignores keypad plus for zoom in, so only that bundle and direction
-  receive main-keyboard Command+=; no shortcut is double-posted.
+- Application-specific key mapping is limited to confirmed incompatibilities,
+  kept in a bundle-identifier set (`_zoomInPrefersMainRowEqual`). WizNote and
+  PDFgear ignore keypad plus for zoom in, so only those bundles and that
+  direction receive main-keyboard Command+=; no shortcut is double-posted.
 - Discrete wheels emit one shortcut per detent. Continuous wheels use a 24-point
   accumulator, a 50 ms emission gate, and a 180 ms idle reset.
 - Momentum tails are consumed without emitting extra shortcuts. Releasing the
@@ -52,6 +55,24 @@ removed. Scroll Reverser Zoom is registered to start at login.
 ## Verification completed
 
 - `./tests/run-unit-tests.sh`: passed.
+
+### 2026-08-27: PDFgear compatibility fix (`d8ef1b7`, installed as 1.9.2)
+
+- Symptom: in PDFgear, modifier + wheel could only zoom out. Cause identical
+  to the WizNote case: PDFgear ignores Command + keypad plus and binds zoom in
+  to main-keyboard Command+=; keypad minus is accepted, so zoom out worked.
+- Fix: generalized the WizNote special case into a bundle-identifier set and
+  added `com.pdfeditor.pdfeditormac`. Unit tests extended with PDFgear in/out
+  expectations; full suite passes.
+- Build: full Xcode 26.6 (`xcodebuild`, Release, ad-hoc) — the earlier
+  CLT-only limitation in "Remaining verification" no longer applies. Bundle
+  rebranded to `com.deepstrategy.scroll-reverser-zoom` 1.9.2
+  (CFBundleVersion 10902, `SRZBuildCommit d8ef1b7`), Sparkle and the app
+  re-signed inside-out with the user's Developer ID (runtime hardened,
+  timestamped), installed over `~/Applications/Scroll Reverser Zoom.app`.
+  Accessibility/Input Monitoring grants survived (same bundle id + Team ID).
+- Owner verification on the live install: PDFgear Control + wheel now zooms
+  in and out; normal reversed scrolling unaffected.
 - Focused mapping tests cover WizNote zoom in/out, Chrome, unknown and nil
   bundle identifiers, the no-direction case, and Command-without-Shift flags.
 - Objective-C source syntax/link check with the Command Line Tools SDK: passed;
